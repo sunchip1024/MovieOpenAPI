@@ -119,6 +119,21 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   return newRequire;
 })({"src/index.js":[function(require,module,exports) {
 var API_key = "3634e102b7a2d3a5181364fdf278bacd";
+function loadDailyBoxOffice(date, size) {
+  var dateString = date.getFullYear().toString().slice(2);
+  dateString += date.getMonth().toString();
+  dateString += date.getDay().toString();
+  if (typeof size == "number") {
+    size = size.toString();
+  }
+  var url = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json";
+  var xmlReq = new XMLHttpRequest();
+  xmlReq.onreadystatechange = function () {
+    if (xmlReq.readyState == 4 && xmlReq.status == 200) {
+      console.log("API send Data!");
+    }
+  };
+}
 },{}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
