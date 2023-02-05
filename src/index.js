@@ -36,9 +36,9 @@ function loadDailyBoxOffice(
   size = 10,
   multiMovie = "Y",
   onlyKor = true,
-  wideAreaCode = "0105000000"
+  wideAreaCode = ""
 ) {
-  date = date.slice(2, 4) + date.slice(5, 7) + date.slice(8);
+  date = date.slice(0, 4) + date.slice(5, 7) + date.slice(8);
 
   let params = [
     new Parameter("key", API_key),
@@ -46,8 +46,11 @@ function loadDailyBoxOffice(
     new Parameter("itemPerPage", size),
     new Parameter("multiMovieYn", multiMovie),
     new Parameter("repNationCd", onlyKor),
-    new Parameter("wideAreaCd", wideAreaCode),
   ];
+
+  if (wideAreaCode != "")
+    params.push(new Parameter("wideAreaCd", wideAreaCode));
+
   let url =
     "http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json";
   url = addUrlParam(url, params);
@@ -58,7 +61,7 @@ function loadDailyBoxOffice(
     "load",
     function () {
       movieListJson = JSON.parse(xmlReq.responseText);
-      console.log(movieListJson);
+      document.querySelector("main").innerText = movieListJson.toString();
     },
     false
   );
@@ -66,12 +69,14 @@ function loadDailyBoxOffice(
   xmlReq.addEventListener(
     "error",
     function () {
-      console.log(JSON.parse(xmlReq.responseText));
+      document.querySelector(main).innerText = JSON.parse(
+        xmlReq.responseText
+      ).toString();
     },
     false
   );
 
-  xmlReq.open("GET", url);
+  xmlReq.open("GET", url, true);
   xmlReq.send(null);
 }
 

@@ -163,20 +163,21 @@ function loadDailyBoxOffice(date) {
   var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10;
   var multiMovie = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "Y";
   var onlyKor = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-  var wideAreaCode = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : "0105000000";
-  date = date.slice(2, 4) + date.slice(5, 7) + date.slice(8);
-  var params = [new Parameter("key", API_key), new Parameter("targetDt", date), new Parameter("itemPerPage", size), new Parameter("multiMovieYn", multiMovie), new Parameter("repNationCd", onlyKor), new Parameter("wideAreaCd", wideAreaCode)];
+  var wideAreaCode = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : "";
+  date = date.slice(0, 4) + date.slice(5, 7) + date.slice(8);
+  var params = [new Parameter("key", API_key), new Parameter("targetDt", date), new Parameter("itemPerPage", size), new Parameter("multiMovieYn", multiMovie), new Parameter("repNationCd", onlyKor)];
+  if (wideAreaCode != "") params.push(new Parameter("wideAreaCd", wideAreaCode));
   var url = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json";
   url = addUrlParam(url, params);
   var xmlReq = new XMLHttpRequest();
   xmlReq.addEventListener("load", function () {
     movieListJson = JSON.parse(xmlReq.responseText);
-    console.log(movieListJson);
+    document.querySelector("main").innerText = movieListJson.toString();
   }, false);
   xmlReq.addEventListener("error", function () {
-    console.log(JSON.parse(xmlReq.responseText));
+    document.querySelector(main).innerText = JSON.parse(xmlReq.responseText).toString();
   }, false);
-  xmlReq.open("GET", url);
+  xmlReq.open("GET", url, true);
   xmlReq.send(null);
 }
 function onClickDailyBoxoffice() {
