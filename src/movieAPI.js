@@ -1,65 +1,67 @@
 const API_key = "3634e102b7a2d3a5181364fdf278bacd";
 
-class Parameter {
-  constructor(key, value) {
-    this._key = key;
-    this._value = value;
-    this._type = typeof value;
-  }
+var APIRequest = APIRequest || {};
+((APIreq) => {
+  let APIKey = null;
 
-  get key() {
-    return this._key;
-  }
-  get type() {
-    return this._type;
-  }
-  get value() {
-    if (this.type == "string") return this._value;
-    else return this._value.toString();
-  }
-}
+  APIreq.SetAPIKey = function (key) {
+    if (key == null) return;
+    if (APIKey != null) return;
+    APIKey = key;
+  };
 
-function XMLHttpRequestEvent() {
-    var EventCallback = {
-        "abort" : null;
-        "error" : null;
-        "load" : null;
-        "loadstart" : null;
-        "loadend" : null;
-        "progress" : null;
-        "readystatechange" : null;
-        "timeout" : null;
+  APIreq.XMLHttpRequestParam = function (key, value) {
+    let _key = key;
+    let _value = value;
+
+    return Object.freeze({
+      key: () => {
+        return _key;
+      },
+      value: () => {
+        return _value;
+      },
+      type: () => {
+        return typeof _value;
+      },
+    });
+  };
+
+  APIreq.XMLHttpRequestEvent = function () {
+    let EventCallback = {
+      abort: null,
+      error: null,
+      load: null,
+      loadstart: null,
+      loadend: null,
+      progress: null,
+      readystatechange: null,
+      timeout: null,
+    };
+
+    return Object.freeze({
+      setEventCallback: function (event, callback) {
+        if (event in EventCallback) EventCallback[event] = callback;
+      },
+
+      getEventCallback: function (event) {
+        return event in EventCallback ? EventCallback[event] : null;
+      },
+    });
+  };
+
+  function addUrlParam(url, params) {
+    if (params.length == 0) return url;
+
+    url += "?";
+    url += params[0].key + "=" + encodeURIComponent(params[0].value);
+    for (let i = 1; i < params.length; i++) {
+      url += "&" + params[i].key + "=" + encodeURIComponent(params[i].value);
     }
-    
-    function setEventCallback(event, callback) {
-        if(event in EventCallback)
-            EventCallback[event] = callback;
-    }
-    
-    function getEventCallback(event) {
-        return (event in EventCallback)? EventCallback[event] : null;
-    }
-}
 
-function addUrlParam(url, params) {
-  if (params.length == 0) return url;
-
-  url += "?";
-  url += params[0].key + "=" + encodeURIComponent(params[0].value);
-  for (let i = 1; i < params.length; i++) {
-    url += "&" + params[i].key + "=" + encodeURIComponent(params[i].value);
+    return url;
   }
-
-  return url;
-}
-
-function loadData(url, params, ) {
-    url = addUrlParam(url, params);
-    
-    var xmlReq = new XMLHttpRequest();
-    
-    xmlReq.addEventListner
-}
+})(APIRequest);
 
 function loadDailyBoxOffice(
   date,
