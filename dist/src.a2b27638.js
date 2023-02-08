@@ -117,58 +117,144 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"src/index.js":[function(require,module,exports) {
+})({"src/APIRequest.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.APIRequest = void 0;
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
-function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+var APIRequest = APIRequest || {};
+exports.APIRequest = APIRequest;
+(function (APIreq) {
+  // APIKey 객체
+  JSONAPIKey = function JSONAPIKey(key) {
+    if (!(key instanceof String)) throw new TypeError("");
+    var APIKey = key;
+    return Object.freeze({
+      key: function key() {
+        return APIKey;
+      }
+    });
+  };
+
+  // API URL 요청에 필요한 키와 값을 저장하는 객체
+  JSONAPIRequestParam = function JSONAPIRequestParam(key, value) {
+    var _key = key instanceof String ? key : key.toString();
+    var _value = value;
+    return Object.freeze({
+      key: function key() {
+        return _key;
+      },
+      value: function value() {
+        return _value;
+      },
+      type: function type() {
+        return _typeof(_value);
+      }
+    });
+  };
+
+  // API URL 요청 시 이벤트 콜백함수를 저장하는 객체
+  APIreq.JSONAPIRequestEvent = function () {
+    var EventCallback = {
+      abort: null,
+      error: null,
+      load: null,
+      loadstart: null,
+      loadend: null,
+      progress: null,
+      readystatechange: null,
+      timeout: null
+    };
+    return Object.freeze({
+      setEventCallback: function setEventCallback(event, callback) {
+        if (event in EventCallback) EventCallback[event] = callback;
+      },
+      getEventCallback: function getEventCallback(event) {
+        return event in EventCallback ? EventCallback[event] : null;
+      },
+      getEventList: function getEventList() {
+        return Object.keys(EventCallback);
+      }
+    });
+  };
+  APIreq.JSONAPIRequest = function (APIKey) {
+    var event = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+    var apiKey = APIreq.JSONAPIKey(APIKey);
+    var req = new XMLHttpRequest();
+    var _iterator = _createForOfIteratorHelper(event.getEventList()),
+      _step;
+    try {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+        var eventType = _step.value;
+        req.addEventListener(eventType, event.getEventCallback(eventType), false);
+      }
+    } catch (err) {
+      _iterator.e(err);
+    } finally {
+      _iterator.f();
+    }
+    return Object.freeze({
+      load: function load(params, method) {
+        var async = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+        var paramObj = JSON.parse(params);
+        var paramList = [];
+        for (var _i = 0, _Object$keys = Object.keys(paramObj); _i < _Object$keys.length; _i++) {
+          var param = _Object$keys[_i];
+          paramList.push(new APIreq.JSONAPIRequestParam(param, paramObj[param]));
+        }
+        var apiUrl = addUrlParam(url, paramList);
+        var data = null;
+        req.onreadystatechange = function () {
+          if (req.readyState == 4 && req.status == 200) data = req.responseText;
+        };
+        req.open(method, apiUrl, async);
+        req.send(null);
+        return data;
+      }
+    });
+  };
+  function addUrlParam(url, params) {
+    if (params.length == 0) return url;
+    url += "?";
+    for (var i = 0; i < params.length; i++) {
+      if (params[i].value == null) continue;
+      url += params[i].key + "=" + encodeURIComponent(params[i].value) + "&";
+    }
+    url = url.slice(0, -1);
+    return url;
+  }
+})(APIRequest);
+},{}],"src/index.js":[function(require,module,exports) {
+"use strict";
+
+var _APIRequest = require("./APIRequest.js");
 var API_key = "3634e102b7a2d3a5181364fdf278bacd";
-var Parameter = /*#__PURE__*/function () {
-  function Parameter(key, value) {
-    _classCallCheck(this, Parameter);
-    this._key = key;
-    this._value = value;
-    this._type = _typeof(value);
-  }
-  _createClass(Parameter, [{
-    key: "key",
-    get: function get() {
-      return this._key;
-    }
-  }, {
-    key: "type",
-    get: function get() {
-      return this._type;
-    }
-  }, {
-    key: "value",
-    get: function get() {
-      if (this.type == "string") return this._value;else return this._value.toString();
-    }
-  }]);
-  return Parameter;
-}();
-function addUrlParam(url, params) {
-  if (params.length == 0) return url;
-  url += "?";
-  url += params[0].key + "=" + encodeURIComponent(params[0].value);
-  for (var i = 1; i < params.length; i++) {
-    url += "&" + params[i].key + "=" + encodeURIComponent(params[i].value);
-  }
-  return url;
-}
 function loadDailyBoxOffice(date) {
   var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10;
   var multiMovie = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "Y";
   var onlyKor = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
-  var wideAreaCode = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : "";
+  var wideAreaCode = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
   date = date.slice(0, 4) + date.slice(5, 7) + date.slice(8);
-  var params = [new Parameter("key", API_key), new Parameter("targetDt", date), new Parameter("itemPerPage", size), new Parameter("multiMovieYn", multiMovie), new Parameter("repNationCd", onlyKor)];
-  if (wideAreaCode != "") params.push(new Parameter("wideAreaCd", wideAreaCode));
+  var paramsObj = {
+    targetDt: date,
+    itemPerPage: size,
+    multiMovieYn: multiMovie,
+    reqNationCd: onlyKor,
+    wideAreaCd: wideAreaCode
+  };
   var url = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json";
-  url = addUrlParam(url, params);
+  var data = null;
+  var BoxOfficeAPIEvent = _APIRequest.APIRequest.JSONAPIRequestEvent();
+  BoxOfficeAPIEvent.setEventCallback("load", function () {
+    document.querySelector("main").innerText = data;
+  });
+  var BoxOfficeAPI = _APIRequest.APIRequest.JSONAPIRequest();
   var xmlReq = new XMLHttpRequest();
   xmlReq.addEventListener("load", function () {
     movieListJson = JSON.parse(xmlReq.responseText);
@@ -191,7 +277,7 @@ function onClickDailyBoxoffice() {
     console.log(exception);
   }
 }
-},{}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./APIRequest.js":"src/APIRequest.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
