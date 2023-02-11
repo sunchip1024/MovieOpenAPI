@@ -1,6 +1,7 @@
 import { APIRequest } from "./APIRequest.js";
 
 const API_key = "3634e102b7a2d3a5181364fdf278bacd";
+let movieAPI = APIRequest.JSONAPIRequest(API_key);
 
 function loadDailyBoxOffice(
   date,
@@ -21,29 +22,15 @@ function loadDailyBoxOffice(
 
   let url =
     "http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json";
-  
-  let movieAPI = APIRequest.JSONAPIRequest(API_key);
 
-  movieAPI.Request.addEventListener(
-    "load",
-    function () {
-      document.querySelector("main").innerText = movieListJson.toString();
-    },
+  movieAPI.send("GET", url, paramsObj);
+
+  let textSpace = document.getElementsByTagName("main");
+  textSpace.addEventListener(
+    "DataLoad",
+    () => (textSpace.innerText = movieAPI.get()),
     false
   );
-
-  movieAPI.Request.addEventListener(
-    "error",
-    function () {
-      document.querySelector(main).innerText = JSON.parse(
-        movieAPI.Request.responText
-      ).toString();
-    },
-    false
-  );
-
-  xmlReq.open("GET", url, true);
-  xmlReq.send(null);
 }
 
 function onClickDailyBoxoffice() {

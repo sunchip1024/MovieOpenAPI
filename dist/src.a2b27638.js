@@ -124,13 +124,18 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.APIRequest = void 0;
-function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 var APIRequest = APIRequest || {};
 exports.APIRequest = APIRequest;
 (function (APIreq) {
+  var DataEvent = {
+    load: new CustomEvent("DataLoad"),
+    error: new CustomEvent("DataError")
+  };
+  APIreq.DataEvent = Object.freeze({
+    load: DataEvent.load,
+    error: DataEvent.error
+  });
+
   // APIKey 객체
   JSONAPIKey = function JSONAPIKey(key) {
     if (!(key instanceof String)) throw new TypeError("");
@@ -141,90 +146,44 @@ exports.APIRequest = APIRequest;
       }
     });
   };
-
-  // API URL 요청에 필요한 키와 값을 저장하는 객체
-  JSONAPIRequestParam = function JSONAPIRequestParam(key, value) {
-    var _key = key instanceof String ? key : key.toString();
-    var _value = value;
-    return Object.freeze({
-      key: function key() {
-        return _key;
-      },
-      value: function value() {
-        return _value;
-      },
-      type: function type() {
-        return _typeof(_value);
-      }
-    });
-  };
-
-  // API URL 요청 시 이벤트 콜백함수를 저장하는 객체
-  APIreq.JSONAPIRequestEvent = function () {
-    var EventCallback = {
-      abort: null,
-      error: null,
-      load: null,
-      loadstart: null,
-      loadend: null,
-      progress: null,
-      readystatechange: null,
-      timeout: null
-    };
-    return Object.freeze({
-      setEventCallback: function setEventCallback(event, callback) {
-        if (event in EventCallback) EventCallback[event] = callback;
-      },
-      getEventCallback: function getEventCallback(event) {
-        return event in EventCallback ? EventCallback[event] : null;
-      },
-      getEventList: function getEventList() {
-        return Object.keys(EventCallback);
-      }
-    });
-  };
   APIreq.JSONAPIRequest = function (APIKey) {
-    var event = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
     var apiKey = APIreq.JSONAPIKey(APIKey);
+    var data = null;
     var req = new XMLHttpRequest();
-    var _iterator = _createForOfIteratorHelper(event.getEventList()),
-      _step;
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done;) {
-        var eventType = _step.value;
-        req.addEventListener(eventType, event.getEventCallback(eventType), false);
-      }
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
+    function SendUrl(method, url, params) {
+      var async = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+      var responseType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : "JSON";
+      var apiUrl = addUrlParam(url, params);
+      req.addEventListener("load", function () {
+        req.responseType = responseType;
+        data = req.responseText;
+        document.dispatchEvent(APIreq.DataEvent.load);
+      }, false);
+      req.addEventListener("error", function () {
+        return document.dispatchEvent(APIreq.DataEvent.error);
+      }, false);
+      req.open(method, apiUrl, async);
+      req.send(null);
+      return Object.freeze({
+        send: function send(method, url, params) {
+          var async = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+          var responseType = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : "JSON";
+          SendUrl(method, url, params, async, responseType);
+        },
+        get: function get() {
+          return data;
+        },
+        Request: req
+      });
     }
-    return Object.freeze({
-      load: function load(params, method) {
-        var async = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-        var paramObj = JSON.parse(params);
-        var paramList = [];
-        for (var _i = 0, _Object$keys = Object.keys(paramObj); _i < _Object$keys.length; _i++) {
-          var param = _Object$keys[_i];
-          paramList.push(new APIreq.JSONAPIRequestParam(param, paramObj[param]));
-        }
-        var apiUrl = addUrlParam(url, paramList);
-        var data = null;
-        req.onreadystatechange = function () {
-          if (req.readyState == 4 && req.status == 200) data = req.responseText;
-        };
-        req.open(method, apiUrl, async);
-        req.send(null);
-        return data;
-      }
-    });
   };
   function addUrlParam(url, params) {
+    params = JSON.parse(params);
     if (params.length == 0) return url;
     url += "?";
-    for (var i = 0; i < params.length; i++) {
-      if (params[i].value == null) continue;
-      url += params[i].key + "=" + encodeURIComponent(params[i].value) + "&";
+    for (var key in Object.keys(params)) {
+      if (params[key] == null) continue;
+      url += key + "=" + encodeURIComponent(params[key]) + "&";
     }
     url = url.slice(0, -1);
     return url;
@@ -235,6 +194,7 @@ exports.APIRequest = APIRequest;
 
 var _APIRequest = require("./APIRequest.js");
 var API_key = "3634e102b7a2d3a5181364fdf278bacd";
+var movieAPI = _APIRequest.APIRequest.JSONAPIRequest(API_key);
 function loadDailyBoxOffice(date) {
   var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10;
   var multiMovie = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "Y";
@@ -249,22 +209,11 @@ function loadDailyBoxOffice(date) {
     wideAreaCd: wideAreaCode
   };
   var url = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json";
-  var data = null;
-  var BoxOfficeAPIEvent = _APIRequest.APIRequest.JSONAPIRequestEvent();
-  BoxOfficeAPIEvent.setEventCallback("load", function () {
-    document.querySelector("main").innerText = data;
-  });
-  var BoxOfficeAPI = _APIRequest.APIRequest.JSONAPIRequest();
-  var xmlReq = new XMLHttpRequest();
-  xmlReq.addEventListener("load", function () {
-    movieListJson = JSON.parse(xmlReq.responseText);
-    document.querySelector("main").innerText = movieListJson.toString();
+  movieAPI.send("GET", url, paramsObj);
+  var textSpace = document.getElementsByTagName("main");
+  textSpace.addEventListener("DataLoad", function () {
+    return textSpace.innerText = movieAPI.get();
   }, false);
-  xmlReq.addEventListener("error", function () {
-    document.querySelector(main).innerText = JSON.parse(xmlReq.responseText).toString();
-  }, false);
-  xmlReq.open("GET", url, true);
-  xmlReq.send(null);
 }
 function onClickDailyBoxoffice() {
   var searchDate = document.querySelector("#searchDate").value;
